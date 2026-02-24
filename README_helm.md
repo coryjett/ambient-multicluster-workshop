@@ -15,13 +15,13 @@ export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.28.3-patch0
-export REPO_KEY=594e990587b9
+export ISTIO_VERSION=1.29.0
+export REPO_KEY=e6283d67ad60
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
 ```
-1. Download Solo's `istioctl` Binary:
+2. Download Solo's `istioctl` Binary:
 ```bash
 OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
 ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
@@ -37,7 +37,6 @@ export PATH=${HOME}/.istioctl/bin:${PATH}
 
 ### Clean up previous Istio installations
 
-```
 ```bash
 kubectl --context=$CLUSTER1 delete smc --all
 kubectl --context=$CLUSTER2 delete smc --all
@@ -57,8 +56,8 @@ done
 ### Configure Trust - Issue Intermediate Certs
 
 ```bash
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.3 sh -
-cd istio-1.28.3
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.29.0 sh -
+cd istio-1.29.0
 
 mkdir -p certs
 pushd certs
@@ -188,7 +187,7 @@ env:
   PILOT_ENABLE_IP_AUTOALLOCATE: "true"
   # Disable selecting workload entries for local service routing.
   # Required for Gloo VirtualDestinaton functionality.
-  PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
+  # PILOT_ENABLE_K8S_SELECT_WORKLOAD_ENTRIES: "false"
   # Required when meshConfig.trustDomain is set
   PILOT_SKIP_VALIDATE_TRUST_DOMAIN: "true"
 global:
@@ -505,7 +504,8 @@ done
 
 Apply the following Kubernetes Gateway API resources to cluster1 to expose productpage service using an Istio gateway:
 
-```yaml
+```bash
+kubectl --context $CLUSTER1 apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -554,7 +554,7 @@ spec:
       group: networking.istio.io
       name: productpage.bookinfo.mesh.internal
       port: 9080
-
+EOF
 ```
 
 Wait until a LB IP gets assigned to bookinfo-gateway-istio svc and then visit the app!
@@ -595,8 +595,8 @@ This section will only use $CLUSTER1.
 First, we'll deploy an egress gateway in the `istio-egress` namespace, and call it `egress-gateway`
 
 ```bash
-kubectl create namespace istio-egress
-kubectl apply -f - <<EOF
+kubectl --context $CLUSTER1 create namespace istio-egress
+kubectl --context $CLUSTER1 apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -616,13 +616,13 @@ EOF
 
 If you plan on creating SE's in the istio-egress namespace, you can label just the ns and not need to label every SE:
 ```
-kubectl label ns istio-egress istio.io/use-waypoint=egress-gateway
+kubectl --context $CLUSTER1 label ns istio-egress istio.io/use-waypoint=egress-gateway
 ```
 
-Define httpbin.org on port 40 and 443 as external hosts using ServiceEntries in the `bookinfo` namespace. Notice that we're labeling the ServiceEntry to use the egress gateway
+Define httpbin.org on port 80 and 443 as external hosts using ServiceEntries in the `bookinfo` namespace. Notice that we're labeling the ServiceEntry to use the egress gateway
 
 ```yaml
-kubectl apply -f - <<EOF
+kubectl --context $CLUSTER1 apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
@@ -656,7 +656,7 @@ EOF
 
 Only allow ratings to call httpbin.org
 ```yaml
-kubectl apply -f - <<EOF
+kubectl --context $CLUSTER1 apply -f - <<EOF
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
@@ -677,19 +677,19 @@ EOF
 
 You should now be able to call httpbin.org from ratings:
 ```bash
-kubectl exec -it $(kubectl get pod -l app=ratings -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
+kubectl --context $CLUSTER1 exec -it $(kubectl --context $CLUSTER1 get pod -l app=ratings -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
 ```
 
 But NOT reviews:
 ```
-kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
+kubectl --context $CLUSTER1 exec -it $(kubectl --context $CLUSTER1 get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s httpbin.org/get
 ```
 
 ### Block unmatched traffic
-But what about hosts that dosn't have a matching ServiceEntry. For example, if we try `jsonplaceholder.typicode.com/todos/1`, it works:
+But what about hosts that doesn't have a matching ServiceEntry. For example, if we try `jsonplaceholder.typicode.com/todos/1`, it works:
 
 ```bash
-kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
+kubectl --context $CLUSTER1 exec -it $(kubectl --context $CLUSTER1 get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
 ```
 
 To block this, we need [egress policies](https://ambientmesh.io/docs/traffic/mesh-egress/#policy-enforcement), which instruct ztunnel how to manage unmatched traffic.
@@ -732,7 +732,7 @@ EOF
 ```
 Let's try again:
 ```bash
-kubectl exec -it $(kubectl get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
+kubectl --context $CLUSTER1 exec -it $(kubectl --context $CLUSTER1 get pod -l app=reviews -n bookinfo -o jsonpath='{.items[0].metadata.name}') -n bookinfo -- curl -s http://jsonplaceholder.typicode.com/todos/1
 ```
 You should see something similar to: `command terminated with exit code 56`
 
@@ -745,8 +745,8 @@ Cluster1 will act as the management cluster and workload cluster:
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade --kube-context ${CLUSTER1} -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.7.1
-helm upgrade --kube-context ${CLUSTER1} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.7.1 --values mgmt-values.yaml \
+helm upgrade --kube-context ${CLUSTER1} -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.12.0
+helm upgrade --kube-context ${CLUSTER1} -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.12.0 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
@@ -797,13 +797,13 @@ helm upgrade --install gloo-platform-crds gloo-platform-crds \
   --namespace gloo-mesh \
   --set installEnterpriseCrds=false \
   --kube-context ${CLUSTER2} \
-  --version 2.7.1
+  --version 2.12.0
 
 helm upgrade --install gloo-platform gloo-platform \
   --repo https://storage.googleapis.com/gloo-platform/helm-charts \
   --namespace gloo-mesh \
   --kube-context ${CLUSTER2} \
-  --version 2.7.1 \
+  --version 2.12.0 \
   -f -<<EOF
 common:
   cluster: cluster2
