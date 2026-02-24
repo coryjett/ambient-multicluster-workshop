@@ -12,8 +12,8 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 ```bash
 export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
-export REPO_KEY=d11c80c0c3fc
-export ISTIO_VERSION=1.27.2
+export REPO_KEY=e6283d67ad60
+export ISTIO_VERSION=1.29.0
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
 1. Download Solo's `istioctl` Binary:
@@ -73,7 +73,7 @@ Install the operator
 for context in ${CLUSTER1} ${CLUSTER2}; do
   helm upgrade -i --kube-context=${context} gloo-operator \
     oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
-    --version 0.4.0 -n gloo-system --create-namespace \
+    --version 0.5.0-rc.0 -n gloo-system --create-namespace \
     --set manager.env.SOLO_ISTIO_LICENSE_KEY=${GLOO_MESH_LICENSE_KEY} \
     --set manager.image.repository=us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator &
 done
@@ -87,7 +87,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.27.2
+  version: 1.29.0
   cluster: cluster1
   network: cluster1
 EOF
@@ -98,7 +98,7 @@ kind: ServiceMeshController
 metadata:
   name: istio
 spec:
-  version: 1.27.2
+  version: 1.29.0
   cluster: cluster2
   network: cluster2
 EOF
@@ -548,7 +548,7 @@ Replace `<set from previous command>` with the actual token value.
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
 ```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo-distroless
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-e6283d67ad60/ztunnel:1.29.0-solo-distroless
 ```
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.
@@ -575,7 +575,7 @@ Optionally, you can deploy the Gloo Management Plane that provides many benefits
 
 Start by downloading the meshctl cli
 ```
-curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.10.1 sh -
+curl -sL https://run.solo.io/meshctl/install | GLOO_MESH_VERSION=v2.12.0 sh -
 export PATH=$HOME/.gloo-mesh/bin:$PATH
 ```
 
@@ -585,9 +585,9 @@ Cluster1 will act as the management cluster and workload cluster: (see [mgmt-val
 helm repo add gloo-platform https://storage.googleapis.com/gloo-platform/helm-charts
 helm repo update
 
-helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.10.1 \
+helm upgrade -i gloo-platform-crds gloo-platform/gloo-platform-crds -n gloo-mesh --create-namespace --version=2.12.0 \
   --set installEnterpriseCrds=false --kube-context=$CLUSTER1
-helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.10.1 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
+helm upgrade -i gloo-platform gloo-platform/gloo-platform -n gloo-mesh --version 2.12.0 --kube-context=$CLUSTER1 --values mgmt-values.yaml \
   --set licensing.glooMeshLicenseKey=$GLOO_MESH_LICENSE_KEY
 ```
 
