@@ -1,0 +1,35 @@
+# Continuous in-cluster traffic generator for bookinfo.
+# Optional helper — keeps the Gloo Mesh UI service graph populated and exercises
+# the global service, cross-cluster routing, and the reviews waypoint (with and
+# without the `end-user: jason` header). Runs as the bookinfo-ratings service
+# account so it lives inside the ambient mesh.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-gen
+  namespace: bookinfo
+  labels:
+    app: traffic-gen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traffic-gen
+  template:
+    metadata:
+      labels:
+        app: traffic-gen
+    spec:
+      serviceAccountName: bookinfo-ratings
+      containers:
+      - name: gen
+        image: curlimages/curl:8.10.1
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          while true; do
+            curl -s -o /dev/null productpage:9080/productpage
+            curl -s -o /dev/null -H "end-user: jason" reviews:9080/reviews/0
+            curl -s -o /dev/null reviews:9080/reviews/0
+            sleep 1
+          done

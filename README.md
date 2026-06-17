@@ -362,6 +362,21 @@ curl $(kubectl get svc -n bookinfo bookinfo-gateway-istio --context $CLUSTER1 -o
 ```
 Voila! This should be round robinning between productpage on both clusters.
 
+> **On Kind:** the LoadBalancer IP is only reachable from inside the `kind` docker network, not your host. Curl from a throwaway container — `docker run --rm --network kind curlimages/curl -s http://<gateway-ip>/productpage` — or `kubectl -n bookinfo port-forward svc/bookinfo-gateway-istio 8080:80` and open http://localhost:8080/productpage.
+
+### Generate continuous traffic (optional)
+
+To keep the Gloo Mesh UI service graph populated and continuously exercise the global service, cross-cluster routing, and the reviews waypoint, deploy the in-cluster traffic generator. It curls `productpage` and `reviews` (with and without the `end-user: jason` header) once per second.
+
+```bash
+kubectl --context $CLUSTER1 apply -f ./traffic-gen.yaml
+```
+
+Remove it when you're done:
+```bash
+kubectl --context $CLUSTER1 -n bookinfo delete -f ./traffic-gen.yaml
+```
+
 ### Automatic and Manual Failover
 
 #### productpage failover
