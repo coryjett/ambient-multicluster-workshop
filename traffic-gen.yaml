@@ -1,8 +1,16 @@
 # Continuous in-cluster traffic generator for bookinfo.
 # Optional helper — keeps the Gloo Mesh UI service graph populated and exercises
-# the global service, cross-cluster routing, and the reviews waypoint (with and
-# without the `end-user: jason` header). Runs as the bookinfo-ratings service
-# account so it lives inside the ambient mesh.
+# real multi-cluster behavior:
+#   * It curls the bookinfo INGRESS GATEWAY, whose HTTPRoute backend is the
+#     global service `productpage.bookinfo.mesh.internal` — so productpage
+#     load-balances across BOTH clusters (this is the cross-cluster path).
+#     NOTE: hitting `productpage:9080` directly would stay LOCAL, because the
+#     productpage Service uses scope=global (standard name = local endpoints
+#     only); only the .mesh.internal hostname / gateway spans clusters.
+#   * It also curls reviews locally, with and without the `end-user: jason`
+#     header, to exercise the per-cluster waypoint route.
+# Deploy on CLUSTER1 (where the bookinfo-gateway lives). Runs as the
+# bookinfo-ratings service account so it lives inside the ambient mesh.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,7 +36,9 @@ spec:
         args:
         - |
           while true; do
-            curl -s -o /dev/null productpage:9080/productpage
+            # cross-cluster: gateway -> productpage.bookinfo.mesh.internal (LB both clusters)
+            curl -s -o /dev/null http://bookinfo-gateway-istio.bookinfo.svc.cluster.local/productpage
+            # local: exercise the reviews waypoint route
             curl -s -o /dev/null -H "end-user: jason" reviews:9080/reviews/0
             curl -s -o /dev/null reviews:9080/reviews/0
             sleep 1
