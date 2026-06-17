@@ -8,12 +8,14 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 |:-----------------------------:|
 ### Env
 
+> **Public registry / Kind:** This page uses the **Gloo operator** (`ServiceMeshController`), which pulls the Solo distribution of Istio from a license-gated registry. To run on **Kind** with the **public, key-less** Solo Istio registry (`us-docker.pkg.dev/soloio-img/istio` + `…/istio-helm`), follow [README_helm.md](./README_helm.md) instead — that path is validated against the 3-cluster Kind setup (mgmt/cluster1/cluster2) and `1.29.4-solo`.
+
 1. Create two clusters and set the env vars below to their context
 ```bash
 export CLUSTER1=gke_ambient_one # UPDATE THIS
 export CLUSTER2=gke_ambient_two # UPDATE THIS
 export REPO_KEY=e6283d67ad60
-export ISTIO_VERSION=1.29.0
+export ISTIO_VERSION=1.29.4
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 ```
 1. Download Solo's `istioctl` Binary:
@@ -548,7 +550,7 @@ Replace `<set from previous command>` with the actual token value.
 The ztunnel is a lightweight data plane component that enables the VM to participate in the Ambient Mesh. Run the following command on the VM to start the ztunnel:
 
 ```bash
-docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/gloo-mesh/istio-e6283d67ad60/ztunnel:1.29.0-solo-distroless
+docker run -d -e BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN} -e ALWAYS_TRAVERSE_NETWORK_GATEWAY=true --network=host us-docker.pkg.dev/soloio-img/istio/ztunnel:1.29.4-solo-distroless
 ```
 
 This command pulls the ztunnel container image and starts it with the necessary configuration to connect to the mesh.

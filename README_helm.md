@@ -8,32 +8,24 @@ In this workshop, you will set up Istio Ambient in a multi-cluster environment, 
 |:-----------------------------:|
 ### Env
 
-1. Create two clusters and set the env vars below to their context
+1. Create three clusters (`mgmt`, `cluster1`, `cluster2`) using the standard Solo workshop Kind setup — see [Lab 1: Deploy Kind clusters](https://github.com/solo-io/workshops/tree/master/gloo-mesh/enterprise/2-11/default#lab-1---deploy-kind-clusters-). It provisions pull-through registry mirrors + MetalLB (per-cluster pools), so LoadBalancer IPs (east-west gateway, ingress) are reachable across clusters on the shared `kind` docker network. Then set the env vars below.
+
+> **Kind note:** the workshop's context-rename step does `kubectl config get-contexts | grep <name>`, which false-matches any *pre-existing* kubeconfig context containing that substring (e.g. a `gke_…_siesta-cluster1`). If `cluster1`/`cluster2` don't get renamed, rename them manually: `kubectl config rename-context kind-kind2 cluster1` (and `kind-kind3 cluster2`).
 
 ```bash
-export CLUSTER1=gke_ambient_one # UPDATE THIS
-export CLUSTER2=gke_ambient_two # UPDATE THIS
+export CLUSTER1=cluster1 # kube-context name
+export CLUSTER2=cluster2 # kube-context name
 export GLOO_MESH_LICENSE_KEY=<update>  # UPDATE THIS
 
-export ISTIO_VERSION=1.29.0
-export REPO_KEY=e6283d67ad60
+# Public Solo distribution of Istio — no per-customer repo key required.
+# Images + Helm charts are anonymously pullable from these registries.
+export ISTIO_VERSION=1.29.4
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
-export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
-export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
-```
-2. Download Solo's `istioctl` Binary:
-```bash
-OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
-ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
-
-mkdir -p ~/.istioctl/bin
-curl -sSL https://storage.googleapis.com/istio-binaries-${REPO_KEY}/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-${OS}-${ARCH}.tar.gz | tar xzf - -C ~/.istioctl/bin
-chmod +x ~/.istioctl/bin/istioctl
-
-export PATH=${HOME}/.istioctl/bin:${PATH}
+export REPO=us-docker.pkg.dev/soloio-img/istio
+export HELM_REPO=us-docker.pkg.dev/soloio-img/istio-helm
 ```
 
-3. Verify using `istioctl version`
+> **istioctl:** The Solo `istioctl` (with the `multicluster` subcommands) ships from a per-customer bucket and is **not** required for this Helm walkthrough — every `istioctl multicluster expose/link/check` step below has a Kubernetes-YAML equivalent (used inline). Upstream `istioctl` is fine for `version`/`proxy-status` if you want it.
 
 ### Clean up previous Istio installations
 

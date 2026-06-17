@@ -1,12 +1,12 @@
-# Solo's Istio Images
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.2-solo
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/install-cni:1.27.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/pilot:1.27.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/ztunnel:1.27.2-solo-distroless
-us-docker.pkg.dev/gloo-mesh/istio-d11c80c0c3fc/proxyv2:1.27.2-solo-distroless
+# Solo's Istio Images (public distribution — anonymously pullable, no repo key)
+us-docker.pkg.dev/soloio-img/istio/install-cni:1.29.4-solo
+us-docker.pkg.dev/soloio-img/istio/pilot:1.29.4-solo
+us-docker.pkg.dev/soloio-img/istio/ztunnel:1.29.4-solo
+us-docker.pkg.dev/soloio-img/istio/proxyv2:1.29.4-solo
+us-docker.pkg.dev/soloio-img/istio/install-cni:1.29.4-solo-distroless
+us-docker.pkg.dev/soloio-img/istio/pilot:1.29.4-solo-distroless
+us-docker.pkg.dev/soloio-img/istio/ztunnel:1.29.4-solo-distroless
+us-docker.pkg.dev/soloio-img/istio/proxyv2:1.29.4-solo-distroless
 
 # Operator
 us-docker.pkg.dev/solo-public/gloo-operator/gloo-operator:0.3.0
@@ -32,12 +32,12 @@ docker.io/istio/examples-bookinfo-reviews-v1:1.20.3
 docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
 docker.io/istio/examples-bookinfo-reviews-v3:1.20.3
 
-# OCI HELM repos
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/base
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/istiod
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/cni
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/ztunnel
-oci://us-docker.pkg.dev/gloo-mesh/istio-helm-d11c80c0c3fc/gateway
+# OCI HELM repos (public distribution)
+oci://us-docker.pkg.dev/soloio-img/istio-helm/base
+oci://us-docker.pkg.dev/soloio-img/istio-helm/istiod
+oci://us-docker.pkg.dev/soloio-img/istio-helm/cni
+oci://us-docker.pkg.dev/soloio-img/istio-helm/ztunnel
+oci://us-docker.pkg.dev/soloio-img/istio-helm/gateway
 
 # non-OCI Helm repos
 https://storage.googleapis.com/gloo-platform/helm-charts # Charts gloo-platform and gloo-platform-crs
